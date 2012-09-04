@@ -27,3 +27,13 @@ FORMS    += mainwindow.ui \
 
 RESOURCES += \
     res/main.qrc
+
+OTHER_FILES += \
+    res/settings.png \
+    res/scale.png \
+    res/info.png \
+    res/file-open.png \
+    res/exit.png \
+    res/button_ok.png \
+    res/button_cancel.png \
+    res/appIcon.png
