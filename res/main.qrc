@@ -6,5 +6,7 @@
         <file alias="info">info.png</file>
         <file alias="settings">settings.png</file>
         <file alias="scale">scale.png</file>
+        <file alias="cancel">button_cancel.png</file>
+        <file alias="ok">button_ok.png</file>
     </qresource>
 </RCC>
