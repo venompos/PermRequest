@@ -1,0 +1,10 @@
+<RCC>
+    <qresource prefix="/icon/gen">
+        <file alias="app">appIcon.png</file>
+        <file alias="exit">exit.png</file>
+        <file alias="file-open">file-open.png</file>
+        <file alias="info">info.png</file>
+        <file alias="settings">settings.png</file>
+        <file alias="scale">scale.png</file>
+    </qresource>
+</RCC>
