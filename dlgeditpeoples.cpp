@@ -4,6 +4,7 @@
 #include <QMap>
 #include <QDebug>
 #include <QMessageBox>
+#include <QRegExp>
 #include <QtSql/QSqlDatabase>
 #include <QtSql/QSqlQuery>
 #include <QtSql/QSqlRecord>
@@ -22,6 +23,19 @@ DlgEditPeoples::DlgEditPeoples(QWidget *parent) :
     connect(
         ui->dep_buttonBox, SIGNAL(accepted()),
         this, SLOT(slot_DlgEditPeoples_accept()));
+
+    // Validators init
+    // +? "\\x0430-\\x044F"
+    QValidator *rxvName = new QRegExpValidator(
+                QRegExp("[\\x0410-\\x042F -]{64}"), this);
+    ui->dep_family->setValidator(rxvName);
+    ui->dep_name->setValidator(rxvName);
+    ui->dep_patron->setValidator(rxvName);
+    QValidator *rxvHouse = new QRegExpValidator(
+                QRegExp("[0-9]{4}[\\x0410-\\x042F]{1}[0-9]{4}"), this);
+    ui->dep_house->setValidator(rxvHouse);
+    QIntValidator *iv = new QIntValidator(0, 9999, this);
+    ui->dep_flat->setValidator(iv);
 }
 
 DlgEditPeoples::~DlgEditPeoples()
@@ -32,18 +46,32 @@ DlgEditPeoples::~DlgEditPeoples()
 void DlgEditPeoples::setId(int id)
 {
     static QMap<int,int> s_mapStreetToCombo;
+    static QMap<int,int> s_mapRegionToCombo;
 
     // Fill combos if is it need
     if (! ui->dep_street->count())
     {
-        const QList< QPair<QString,int> > &rl = s_common.m_listStreet;
         QList< QPair<QString,int> >::ConstIterator it;
-        int c = 0;
-        for (it=rl.begin();it!=rl.end();it++,c++)
+        int c;
+
+        const QList< QPair<QString,int> > &rls = s_common.m_listStreet;
+        for (it=rls.begin(), c=0;
+             it!=rls.end();
+             it++, c++)
         {
             ui->dep_street->addItem((*it).first, (*it).second);
             if (s_common.m_listStreetUni.contains(qMakePair((*it).first, (*it).second)))
                 s_mapStreetToCombo.insert((*it).second, c);
+        }
+
+        const QList< QPair<QString,int> > &rlr = s_common.m_listRegion;
+        for (it=rlr.begin(), c=0;
+             it!=rlr.end();
+             it++, c++)
+        {
+            ui->dep_region->addItem((*it).first, (*it).second);
+            if (s_common.m_listRegion.contains(qMakePair((*it).first, (*it).second)))
+                s_mapRegionToCombo.insert((*it).second, c);
         }
     }
 
@@ -69,6 +97,7 @@ void DlgEditPeoples::setId(int id)
     m_icStreet = q.record().indexOf("street");
     m_icHouse = q.record().indexOf("house");
     m_icFlat = q.record().indexOf("flat");
+    m_icRegion = q.record().indexOf("region");
 
     // Copy fields to m_cp*
     m_cpFamily = q.value(m_icFamily).toString();
@@ -79,6 +108,7 @@ void DlgEditPeoples::setId(int id)
     m_cpStreet = q.value(m_icStreet).toInt();
     m_cpHouse = q.value(m_icHouse).toString();
     m_cpFlat = q.value(m_icFlat).toInt();
+    m_cpRegion = q.value(m_icRegion).toInt();
 
     q.clear();
 
@@ -92,6 +122,7 @@ void DlgEditPeoples::setId(int id)
     ui->dep_street->setCurrentIndex(s_mapStreetToCombo.value(m_cpStreet));
     ui->dep_house->setText(m_cpHouse);
     ui->dep_flat->setText(QString("%1").arg(m_cpFlat));
+    ui->dep_region->setCurrentIndex(s_mapRegionToCombo.value(m_cpRegion));
 
 
     m_id = id;
@@ -107,6 +138,40 @@ void DlgEditPeoples::slot_DlgEditPeoples_accept()
 {
     // If all changed fields are correct then do transaction.
     // If not - focus on It.
+    QSqlQuery q(QSqlDatabase::database("mega"));
+    QString s, sQ;
 
+    try
+    {
+        int ti;
+
+        if (m_cpFamily != ui->dep_family->text())
+        {
+            sQ = QString("UPDATE peoples SET family='%1' WHERE `id`=%2").\
+                    arg(ui->dep_family->text()).arg(m_id);
+            if (! q.exec(sQ))
+                throw "family";
+        }
+
+        ti = ui->dep_street->itemData(ui->dep_street->currentIndex()).toInt();
+        if (m_cpStreet != ti)
+        {
+            sQ = QString("UPDATE peoples SET street='%1' WHERE `id`=%2").\
+                    arg(ti).arg(m_id);
+            if (! q.exec(sQ))
+                throw "street";
+        }
+    }
+    catch (const QString & e)
+    {
+        QString se = tr("Update query error");
+        qDebug() << se << ": " << q.lastError().text();
+        QMessageBox::warning(this, se, q.lastError().text());
+        q.clear();
+        reject();
+        return;
+    }
+    q.clear();
     accept();
 }
+

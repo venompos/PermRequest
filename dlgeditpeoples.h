@@ -39,6 +39,7 @@ private:
     int     m_cpStreet;
     QString m_cpHouse;
     int     m_cpFlat;
+    int     m_cpRegion;
 
     // ids of columns
     int m_icFamily;
@@ -49,6 +50,7 @@ private:
     int m_icStreet;
     int m_icHouse;
     int m_icFlat;
+    int m_icRegion;
 
 };
 
