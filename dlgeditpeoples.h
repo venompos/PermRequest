@@ -52,6 +52,10 @@ private:
     int m_icFlat;
     int m_icRegion;
 
+    bool sqlUpdateFieldString(
+            const QString &sTable,
+            const QString &sUi,
+            QString &sCp);
 };
 
 #endif // DLGEDITPEOPLES_H

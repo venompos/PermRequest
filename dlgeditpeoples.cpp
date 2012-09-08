@@ -145,13 +145,8 @@ void DlgEditPeoples::slot_DlgEditPeoples_accept()
     {
         int ti;
 
-        if (m_cpFamily != ui->dep_family->text())
-        {
-            sQ = QString("UPDATE peoples SET family='%1' WHERE `id`=%2").\
-                    arg(ui->dep_family->text()).arg(m_id);
-            if (! q.exec(sQ))
+        if (! sqlUpdateFieldString("family", ui->dep_family->text(), m_cpFamily))
                 throw "family";
-        }
 
         ti = ui->dep_street->itemData(ui->dep_street->currentIndex()).toInt();
         if (m_cpStreet != ti)
@@ -160,6 +155,7 @@ void DlgEditPeoples::slot_DlgEditPeoples_accept()
                     arg(ti).arg(m_id);
             if (! q.exec(sQ))
                 throw "street";
+            m_cpStreet = ti;
         }
     }
     catch (const QString & e)
@@ -175,3 +171,30 @@ void DlgEditPeoples::slot_DlgEditPeoples_accept()
     accept();
 }
 
+bool DlgEditPeoples::sqlUpdateFieldString(
+        const QString &sTable,
+        const QString &sUi,
+        QString &sCp)
+{
+    //
+    // TODO: Do TRANSACTION !!!
+
+    QSqlQuery q(QSqlDatabase::database("mega"));
+    QString sQ;
+    if (sCp != sUi)
+    {
+        sQ = QString("UPDATE peoples SET %1='%2' WHERE `id`=%3").\
+                arg(sTable).arg(sUi).arg(m_id);
+        if (! q.exec(sQ))
+        {
+            QString se = tr("Update query error");
+            qDebug() << se << ": " << q.lastError().text();
+            QMessageBox::warning(this, se, q.lastError().text());
+            q.clear();
+            return false;
+        }
+        sCp = sUi;
+    }
+    q.clear();
+    return true;
+}
