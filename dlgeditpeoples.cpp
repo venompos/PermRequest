@@ -77,8 +77,8 @@ void DlgEditPeoples::setId(int id)
 
     // Request all fields from SELECT query to QMap
     QSqlQuery q(QSqlDatabase::database("mega"));
-    q.prepare("SELECT * FROM peoples WHERE id=:ID");
-    q.bindValue(":ID", id);
+    q.prepare("SELECT * FROM peoples WHERE id=?");
+    q.bindValue(0, id);
     q.exec();
     if (q.lastError().isValid())
     {
@@ -138,63 +138,66 @@ void DlgEditPeoples::slot_DlgEditPeoples_accept()
 {
     // If all changed fields are correct then do transaction.
     // If not - focus on It.
-    QSqlQuery q(QSqlDatabase::database("mega"));
-    QString s, sQ;
 
-    try
-    {
-        int ti;
+    bool rv = true;
 
-        if (! sqlUpdateFieldString("family", ui->dep_family->text(), m_cpFamily))
-                throw "family";
+    if (rv &= sqlUpdateField<QString>("family", ui->dep_family->text(), m_cpFamily))
+        ui->dep_family->setFocus();
+    if (rv &= sqlUpdateField<QString>("name", ui->dep_name->text(), m_cpName))
+        ui->dep_name->setFocus();
+    if (rv &= sqlUpdateField<QString>("patron", ui->dep_patron->text(), m_cpPatron))
+        ui->dep_patron->setFocus();
+    if (rv &= sqlUpdateField<QString>("sex", ui->dep_sex->currentText(), m_cpSex))
+        ui->dep_sex->setFocus();
+    if (rv &= sqlUpdateField<QDate>("birth", ui->dep_birth->date(), m_cpBirth))
+        ui->dep_birth->setFocus();
+    if (rv &= sqlUpdateField<int>("street",
+        ui->dep_street->itemData(ui->dep_street->currentIndex()).toInt(),
+        m_cpStreet))
+        ui->dep_street->setFocus();
+    if (rv &= sqlUpdateField<QString>("house", ui->dep_house->text(), m_cpName))
+        ui->dep_house->setFocus();
+    if (rv &= sqlUpdateField<int>("flat", ui->dep_flat->text().toInt(), m_cpFlat))
+        ui->dep_flat->setFocus();
+    if (rv &= sqlUpdateField<int>("region",
+        ui->dep_region->itemData(ui->dep_region->currentIndex()).toInt(),
+        m_cpRegion))
+        ui->dep_region->setFocus();
 
-        ti = ui->dep_street->itemData(ui->dep_street->currentIndex()).toInt();
-        if (m_cpStreet != ti)
-        {
-            sQ = QString("UPDATE peoples SET street='%1' WHERE `id`=%2").\
-                    arg(ti).arg(m_id);
-            if (! q.exec(sQ))
-                throw "street";
-            m_cpStreet = ti;
-        }
-    }
-    catch (const QString & e)
-    {
-        QString se = tr("Update query error");
-        qDebug() << se << ": " << q.lastError().text();
-        QMessageBox::warning(this, se, q.lastError().text());
-        q.clear();
+
+    if (rv)
+        accept();
+    else
         reject();
-        return;
-    }
-    q.clear();
-    accept();
 }
 
-bool DlgEditPeoples::sqlUpdateFieldString(
-        const QString &sTable,
-        const QString &sUi,
-        QString &sCp)
+template< typename T >
+bool DlgEditPeoples::sqlUpdateField(
+    const QString &sField,
+    const T &vUi,
+    T &vCp)
 {
-    //
-    // TODO: Do TRANSACTION !!!
-
-    QSqlQuery q(QSqlDatabase::database("mega"));
-    QString sQ;
-    if (sCp != sUi)
+    if (vCp != vUi)
     {
-        sQ = QString("UPDATE peoples SET %1='%2' WHERE `id`=%3").\
-                arg(sTable).arg(sUi).arg(m_id);
-        if (! q.exec(sQ))
+        QSqlDatabase db = QSqlDatabase::database("mega");
+        db.transaction();
+        QSqlQuery q(db);
+        q.prepare(QString("UPDATE peoples SET %1=? WHERE id=?").arg(sField));
+        q.bindValue(1, m_id);
+        q.bindValue(0, vUi);
+        if (! q.exec())
         {
             QString se = tr("Update query error");
             qDebug() << se << ": " << q.lastError().text();
             QMessageBox::warning(this, se, q.lastError().text());
+            db.rollback();
+            qDebug() << q.executedQuery();
             q.clear();
             return false;
         }
-        sCp = sUi;
+        vCp = vUi;
+        db.commit();
+        q.clear();
     }
-    q.clear();
     return true;
 }

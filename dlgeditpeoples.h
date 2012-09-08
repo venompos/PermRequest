@@ -52,10 +52,10 @@ private:
     int m_icFlat;
     int m_icRegion;
 
-    bool sqlUpdateFieldString(
-            const QString &sTable,
-            const QString &sUi,
-            QString &sCp);
+    template <typename T> bool sqlUpdateField(
+        const QString &sField,
+        const T &vUi,
+        T &vCp);
 };
 
 #endif // DLGEDITPEOPLES_H

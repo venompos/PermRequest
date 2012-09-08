@@ -74,6 +74,7 @@ int main(int argc, char *argv[])
             qDebug() << "Transactions are supported";
 
 
+        // TODO: And cache its into local tables | files.
         if (! Common::fillListfromSQL(
                     db, "cod", "street", "street", &s_common.m_listStreet))
             throw "fillListfromSQL: street";
