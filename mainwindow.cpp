@@ -121,10 +121,10 @@ void MainWindow::on_trs_pushRequest_clicked()
         ui->trs_dateBirthFrom->setDate(ui->trs_dateBirthTo->date());
         ui->trs_dateBirthTo->setDate(d);
     }
-    if (ui->trs_dateBirthFrom->text().compare("1800-01-01"))
-        slW << QString("birth>='") + ui->trs_dateBirthFrom->text() + "'";
-    if (ui->trs_dateBirthTo->text().compare("2012-01-01"))
-        slW << QString("birth<='") + ui->trs_dateBirthTo->text() + "'";
+    if (ui->trs_dateBirthFrom->date() != QDate(1800,1,1))
+        slW << QString("birth>='") + ui->trs_dateBirthFrom->date().toString("yyyy-MM-dd") + "'";
+    if (ui->trs_dateBirthTo->date() != QDate(2012,1,1))
+        slW << QString("birth<='") + ui->trs_dateBirthTo->date().toString("yyyy-MM-dd") + "'";
 
     sW = slW.join(" AND ");
     sQ = QString("SELECT peoples.`id`,family,`name`,patron,birth,"
@@ -137,6 +137,7 @@ void MainWindow::on_trs_pushRequest_clicked()
 //        sQ.replace("WHERE  ", "WHERE street.t='!' ");
     //foreach (const QString &is, slW){}
 
+    QMessageBox::information(this, "Request", sQ);
     queryPeoples(sQ);
 }
 
