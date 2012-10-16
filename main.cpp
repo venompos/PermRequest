@@ -23,8 +23,7 @@ int main(int argc, char *argv[])
     QSqlDatabase db;
 
     // Setup Application parameters
-    QString version = QDate::fromString(
-                __DATE__, QString("MMM d yyyy")).toString("yyyyMMdd");
+    QString version = QDate::currentDate().toString("yyyyMMdd");
     a.setStyle("plastique");
     a.setWindowIcon(QIcon(":/icon/gen/app"));
     a.setApplicationName("PermRequest");
@@ -37,6 +36,7 @@ int main(int argc, char *argv[])
     settings->setValue("/version", version);
 
     MainWindow w;
+    w.setWindowTitle(a.applicationName() + '-' + version);
 
     try
     {
@@ -75,6 +75,9 @@ int main(int argc, char *argv[])
 
 
         // TODO: And cache its into local tables | files.
+        //  Make a table for tech info or cache info (datetime lastUpdated)
+        //   - settings cache lastUpdate compare to SQL lastUpdate field.
+        //
         if (! Common::fillListfromSQL(
                     db, "cod", "street", "street", &s_common.m_listStreet))
             throw "fillListfromSQL: street";
